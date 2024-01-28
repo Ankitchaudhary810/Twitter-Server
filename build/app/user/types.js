@@ -9,6 +9,6 @@ exports.types = `#graphql
         lastName: String!
         email: String!
         profileImageUrl: String
-        
+        tweets: [Tweet]
     }
 `;
