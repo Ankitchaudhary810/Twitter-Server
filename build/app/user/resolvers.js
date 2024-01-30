@@ -46,7 +46,6 @@ const queries = {
     }),
     getCurrentUser: (parent, args, ctx) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
-        console.log("ctx: ", ctx);
         const id = (_a = ctx.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!id)
             return "ye to null hai in getCurrentUser ";
@@ -61,6 +60,9 @@ const queries = {
         const user = yield db_1.prismaClient.user.findUnique({ where: { id } });
         console.log(user);
         return user;
+    }),
+    getUserById: (parent, { id }, ctx) => __awaiter(void 0, void 0, void 0, function* () {
+        return db_1.prismaClient.user.findUnique({ where: { id: id } });
     })
 };
 const extraResolvers = {
