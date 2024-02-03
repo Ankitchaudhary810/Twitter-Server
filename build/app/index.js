@@ -21,11 +21,13 @@ const cors_1 = __importDefault(require("cors"));
 const jwt_1 = __importDefault(require("../services/jwt"));
 const user_1 = require("./user");
 const tweet_1 = require("./tweet");
+const dotenv_1 = __importDefault(require("dotenv"));
 function initServer() {
     return __awaiter(this, void 0, void 0, function* () {
         const app = (0, express_1.default)();
         app.use(body_parser_1.default.json());
         app.use((0, cors_1.default)());
+        dotenv_1.default.config();
         const graphqlServer = new server_1.ApolloServer({
             typeDefs: `
       ${user_1.User.types}
