@@ -48,7 +48,7 @@ const queries = {
 };
 const extraResolvers = {
     Tweet: {
-        author: (parent) => user_1.default.getUserById(parent.autherId)
+        author: (parent) => user_1.default.getUserById(parent.authorId)
     }
 };
 exports.resolvers = { mutations, extraResolvers, queries };
