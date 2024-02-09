@@ -16,6 +16,7 @@ exports.resolvers = void 0;
 const db_1 = require("../../clients/db");
 const jwt_1 = __importDefault(require("../../services/jwt"));
 const user_1 = __importDefault(require("../../services/user"));
+const redis_1 = require("../../clients/redis");
 const queries = {
     verifyGoogleToken: (parent, { token }) => __awaiter(void 0, void 0, void 0, function* () {
         const resultToken = yield user_1.default.verifyGoogleAuthToken(token);
@@ -65,6 +66,9 @@ const extraResolvers = {
         recommendedUser: (parent, _, ctx) => __awaiter(void 0, void 0, void 0, function* () {
             if (!ctx.user)
                 return [];
+            const cachedValue = yield redis_1.redisClient.get(`RECOMMENDED_USER:${ctx.user.id}`);
+            if (cachedValue)
+                return JSON.parse(cachedValue);
             const myFollowings = yield db_1.prismaClient.follows.findMany({
                 where: {
                     follower: { id: ctx.user.id },
@@ -80,11 +84,11 @@ const extraResolvers = {
                 for (const followingOfFollowedUser of followings.following.followers) {
                     if (followingOfFollowedUser.following.id !== ctx.user.id &&
                         myFollowings.findIndex((e) => (e === null || e === void 0 ? void 0 : e.followingId) === followingOfFollowedUser.following.id) < 0) {
-                        console.log(followingOfFollowedUser);
                         users.push(followingOfFollowedUser.following);
                     }
                 }
             }
+            yield redis_1.redisClient.set(`RECOMMENDED_USER:${ctx.user.id}`, JSON.stringify(users));
             return users;
         }),
     },
