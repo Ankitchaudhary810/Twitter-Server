@@ -35,12 +35,11 @@ const queries = {
             return null;
         const id = userData === null || userData === void 0 ? void 0 : userData.id;
         const user = yield db_1.prismaClient.user.findUnique({ where: { id } });
-        console.log(user);
         return user;
     }),
     getUserById: (parent, { id }, ctx) => __awaiter(void 0, void 0, void 0, function* () {
         return db_1.prismaClient.user.findUnique({ where: { id } });
-    })
+    }),
 };
 const extraResolvers = {
     User: {
@@ -49,20 +48,45 @@ const extraResolvers = {
             const result = yield db_1.prismaClient.follows.findMany({
                 where: { following: { id: parent.id } },
                 include: {
-                    follower: true
-                }
+                    follower: true,
+                },
             });
-            return result.map(el => el.follower);
+            return result.map((el) => el.follower);
         }),
         following: (parent) => __awaiter(void 0, void 0, void 0, function* () {
             const result = yield db_1.prismaClient.follows.findMany({
                 where: { follower: { id: parent.id } },
                 include: {
-                    following: true
-                }
+                    following: true,
+                },
             });
             return result.map((el) => el.following);
-        })
+        }),
+        recommendedUser: (parent, _, ctx) => __awaiter(void 0, void 0, void 0, function* () {
+            if (!ctx.user)
+                return [];
+            const myFollowings = yield db_1.prismaClient.follows.findMany({
+                where: {
+                    follower: { id: ctx.user.id },
+                },
+                include: {
+                    following: {
+                        include: { followers: { include: { following: true } } },
+                    },
+                },
+            });
+            const users = [];
+            for (const followings of myFollowings) {
+                for (const followingOfFollowedUser of followings.following.followers) {
+                    if (followingOfFollowedUser.following.id !== ctx.user.id &&
+                        myFollowings.findIndex((e) => (e === null || e === void 0 ? void 0 : e.followingId) === followingOfFollowedUser.following.id) < 0) {
+                        console.log(followingOfFollowedUser);
+                        users.push(followingOfFollowedUser.following);
+                    }
+                }
+            }
+            return users;
+        }),
     },
 };
 const mutations = {

@@ -12,6 +12,7 @@ exports.types = `#graphql
         followers: [User]
         following: [User]
         tweets: [Tweet]
+        recommendedUser: [User]
 
     }
 `;
