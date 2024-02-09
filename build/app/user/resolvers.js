@@ -98,12 +98,14 @@ const mutations = {
         if (!ctx.user || !ctx.user.id)
             throw new Error("unauthenticated");
         yield user_1.default.followUser(ctx.user.id, to);
+        yield redis_1.redisClient.del(`RECOMMENDED_USER:${ctx.user.id}`);
         return true;
     }),
     unfollowUser: (parent, { to }, ctx) => __awaiter(void 0, void 0, void 0, function* () {
         if (!ctx.user || !ctx.user.id)
             throw new Error("unauthenticated");
         yield user_1.default.unfollowUser(ctx.user.id, to);
+        yield redis_1.redisClient.del(`RECOMMENDED_USER:${ctx.user.id}`);
         return true;
     }),
 };
