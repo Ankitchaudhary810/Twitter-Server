@@ -14,6 +14,11 @@ const redis_1 = require("../clients/redis");
 class TweetService {
     static createTweet(data) {
         return __awaiter(this, void 0, void 0, function* () {
+            const rateLimitFlag = yield redis_1.redisClient.get(`RATE_LIMIT_TWEET:${data.userId}`);
+            if (rateLimitFlag) {
+                console.log("inside rateLimitFlag");
+                throw new Error("Please Wait......");
+            }
             const tweet = yield db_1.prismaClient.tweet.create({
                 data: {
                     content: data.content,
@@ -21,6 +26,7 @@ class TweetService {
                     author: { connect: { id: data.userId } },
                 },
             });
+            yield redis_1.redisClient.setex(`RATE_LIMIT_TWEET:${data.userId}`, 10, 1);
             yield redis_1.redisClient.del("ALL_TWEETS");
             return tweet;
         });
@@ -30,7 +36,7 @@ class TweetService {
             const cachedTweets = yield redis_1.redisClient.get("ALL_TWEETS");
             if (cachedTweets)
                 return JSON.parse(cachedTweets);
-            const tweets = db_1.prismaClient.tweet.findMany({
+            const tweets = yield db_1.prismaClient.tweet.findMany({
                 orderBy: { createdAt: "desc" },
             });
             yield redis_1.redisClient.set("ALL_TWEETS", JSON.stringify(tweets));

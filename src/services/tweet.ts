@@ -1,3 +1,4 @@
+import { Tweet } from "@prisma/client";
 import { prismaClient } from "../clients/db";
 import { redisClient } from "../clients/redis";
 
@@ -8,6 +9,13 @@ export interface CreateTweetPayload {
 }
 class TweetService {
   public static async createTweet(data: CreateTweetPayload) {
+    const rateLimitFlag = await redisClient.get(
+      `RATE_LIMIT_TWEET:${data.userId}`
+    );
+    if (rateLimitFlag) {
+      console.log("inside rateLimitFlag");
+      throw new Error("Please Wait......");
+    }
     const tweet = await prismaClient.tweet.create({
       data: {
         content: data.content,
@@ -15,6 +23,7 @@ class TweetService {
         author: { connect: { id: data.userId } },
       },
     });
+    await redisClient.setex(`RATE_LIMIT_TWEET:${data.userId}`, 10, 1);
     await redisClient.del("ALL_TWEETS");
     return tweet;
   }
@@ -22,11 +31,12 @@ class TweetService {
   public static async getAllTweets() {
     const cachedTweets = await redisClient.get("ALL_TWEETS");
     if (cachedTweets) return JSON.parse(cachedTweets);
-    const tweets = prismaClient.tweet.findMany({
+    const tweets = await prismaClient.tweet.findMany({
       orderBy: { createdAt: "desc" },
     });
 
     await redisClient.set("ALL_TWEETS", JSON.stringify(tweets));
+
     return tweets;
   }
 }
