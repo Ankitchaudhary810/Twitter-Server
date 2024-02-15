@@ -87,7 +87,9 @@ const extraResolvers = {
         `RECOMMENDED_USER:${ctx.user.id}`
       );
 
-      if (cachedValue) return JSON.parse(cachedValue);
+      if (cachedValue) {
+        return JSON.parse(cachedValue);
+      }
 
       const myFollowings = await prismaClient.follows.findMany({
         where: {

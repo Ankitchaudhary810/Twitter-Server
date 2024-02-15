@@ -67,8 +67,9 @@ const extraResolvers = {
             if (!ctx.user)
                 return [];
             const cachedValue = yield redis_1.redisClient.get(`RECOMMENDED_USER:${ctx.user.id}`);
-            if (cachedValue)
+            if (cachedValue) {
                 return JSON.parse(cachedValue);
+            }
             const myFollowings = yield db_1.prismaClient.follows.findMany({
                 where: {
                     follower: { id: ctx.user.id },

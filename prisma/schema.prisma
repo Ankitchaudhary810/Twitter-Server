@@ -41,7 +41,8 @@ model Tweet {
   content  String
   imageURL String?
 
-  author   User   @relation(fields: [authorId], references: [id])
+  likeIds  String[]
+  author   User     @relation(fields: [authorId], references: [id])
   authorId String
 
   createdAt DateTime @default(now())
