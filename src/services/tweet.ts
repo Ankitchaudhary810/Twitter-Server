@@ -13,7 +13,6 @@ class TweetService {
       `RATE_LIMIT_TWEET:${data.userId}`
     );
     if (rateLimitFlag) {
-      console.log("inside rateLimitFlag");
       throw new Error("Please Wait......");
     }
     const tweet = await prismaClient.tweet.create({
@@ -23,6 +22,8 @@ class TweetService {
         author: { connect: { id: data.userId } },
       },
     });
+
+    console.log(tweet);
     await redisClient.setex(`RATE_LIMIT_TWEET:${data.userId}`, 10, 1);
     await redisClient.del("ALL_TWEETS");
     return tweet;
@@ -34,10 +35,43 @@ class TweetService {
     const tweets = await prismaClient.tweet.findMany({
       orderBy: { createdAt: "desc" },
     });
-
     await redisClient.set("ALL_TWEETS", JSON.stringify(tweets));
-
     return tweets;
+  }
+
+  public static async toggleLike(userId: string, tweetId: string) {
+    await redisClient.del("ALL_TWEETS");
+    const existingTweet = await prismaClient.tweet.findUnique({
+      where: { id: tweetId },
+    });
+
+    if (!existingTweet) {
+      throw new Error(`Tweet with ID ${tweetId} not found`);
+    }
+
+    const hasLiked = existingTweet.likeIds.includes(userId);
+
+    if (hasLiked) {
+      const updatedTweet = await prismaClient.tweet.update({
+        where: { id: tweetId },
+        data: {
+          likeIds: {
+            set: existingTweet.likeIds.filter((userId) => userId !== userId),
+          },
+        },
+      });
+      return updatedTweet;
+    } else {
+      const updatedTweet = await prismaClient.tweet.update({
+        where: { id: tweetId },
+        data: {
+          likeIds: {
+            push: userId,
+          },
+        },
+      });
+      return updatedTweet;
+    }
   }
 }
 

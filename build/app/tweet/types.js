@@ -8,10 +8,11 @@ exports.types = `#graphql
         imageURL: String
     }
 
-    type Tweet{
-       id: ID!
-       content: String!
-       imageURL: String
-       author: User
+    type Tweet {
+        id: ID!
+        content: String!
+        imageURL: String
+        author: User
+        likeIds: [String]
     }
 `;

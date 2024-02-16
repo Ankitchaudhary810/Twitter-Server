@@ -16,7 +16,6 @@ class TweetService {
         return __awaiter(this, void 0, void 0, function* () {
             const rateLimitFlag = yield redis_1.redisClient.get(`RATE_LIMIT_TWEET:${data.userId}`);
             if (rateLimitFlag) {
-                console.log("inside rateLimitFlag");
                 throw new Error("Please Wait......");
             }
             const tweet = yield db_1.prismaClient.tweet.create({
@@ -26,6 +25,7 @@ class TweetService {
                     author: { connect: { id: data.userId } },
                 },
             });
+            console.log(tweet);
             yield redis_1.redisClient.setex(`RATE_LIMIT_TWEET:${data.userId}`, 10, 1);
             yield redis_1.redisClient.del("ALL_TWEETS");
             return tweet;
@@ -41,6 +41,40 @@ class TweetService {
             });
             yield redis_1.redisClient.set("ALL_TWEETS", JSON.stringify(tweets));
             return tweets;
+        });
+    }
+    static toggleLike(userId, tweetId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield redis_1.redisClient.del("ALL_TWEETS");
+            const existingTweet = yield db_1.prismaClient.tweet.findUnique({
+                where: { id: tweetId },
+            });
+            if (!existingTweet) {
+                throw new Error(`Tweet with ID ${tweetId} not found`);
+            }
+            const hasLiked = existingTweet.likeIds.includes(userId);
+            if (hasLiked) {
+                const updatedTweet = yield db_1.prismaClient.tweet.update({
+                    where: { id: tweetId },
+                    data: {
+                        likeIds: {
+                            set: existingTweet.likeIds.filter((userId) => userId !== userId),
+                        },
+                    },
+                });
+                return updatedTweet;
+            }
+            else {
+                const updatedTweet = yield db_1.prismaClient.tweet.update({
+                    where: { id: tweetId },
+                    data: {
+                        likeIds: {
+                            push: userId,
+                        },
+                    },
+                });
+                return updatedTweet;
+            }
         });
     }
 }
