@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvers = void 0;
+const db_1 = require("../../clients/db");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 const user_1 = __importDefault(require("../../services/user"));
@@ -33,6 +34,26 @@ const mutations = {
             throw new Error("Unauthenticated");
         }
         return tweet_1.default.toggleLike(ctx.user.id, tweetId);
+    }),
+    createComment: (parent, { TweetId, Comment }, ctx) => __awaiter(void 0, void 0, void 0, function* () {
+        if (!ctx.user || !ctx.user.id) {
+            throw new Error("Unauthenticated");
+        }
+        const tweet = yield db_1.prismaClient.tweet.findUnique({
+            where: {
+                id: TweetId,
+            },
+        });
+        if (!tweet)
+            throw new Error("Tweet Not Found");
+        const comment = yield db_1.prismaClient.comment.create({
+            data: {
+                user: { connect: { id: ctx.user.id } },
+                body: Comment,
+                tweet: { connect: { id: TweetId } },
+            },
+        });
+        return comment;
     }),
 };
 const queries = {

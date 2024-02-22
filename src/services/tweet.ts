@@ -23,7 +23,6 @@ class TweetService {
       },
     });
 
-    console.log(tweet);
     await redisClient.setex(`RATE_LIMIT_TWEET:${data.userId}`, 10, 1);
     await redisClient.del("ALL_TWEETS");
     return tweet;

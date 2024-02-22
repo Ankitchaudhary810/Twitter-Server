@@ -25,7 +25,6 @@ class TweetService {
                     author: { connect: { id: data.userId } },
                 },
             });
-            console.log(tweet);
             yield redis_1.redisClient.setex(`RATE_LIMIT_TWEET:${data.userId}`, 10, 1);
             yield redis_1.redisClient.del("ALL_TWEETS");
             return tweet;
